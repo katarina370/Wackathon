@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Memory Map</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    body { margin: 0; padding: 0; }
+    #map { height: 100vh; width: 100vw; }
+    .popup-form {
+      display: flex;
+      flex-direction: column;
+    }
+    .popup-form textarea, .popup-form input {
+      margin-top: 5px;
+      font-size: 14px;
+    }
+    .popup-form button {
+      margin-top: 5px;
+      padding: 4px 8px;
+    }
+    .memory-img {
+      max-width: 200px;
+      display: block;
+      margin-top: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    const map = L.map('map').setView([0, 0], 2);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    map.on('click', function(e) {
+      const formHtml = `
+        <div class="popup-form">
+          <textarea id="memoryText" placeholder="Write a short memory..."></textarea>
+          <input type="file" id="memoryPhoto" accept="image/*">
+          <button onclick="submitMemory(${e.latlng.lat}, ${e.latlng.lng})">Submit</button>
+        </div>`;
+
+      L.popup()
+        .setLatLng(e.latlng)
+        .setContent(formHtml)
+        .openOn(map);
+    });
+
+    window.submitMemory = function(lat, lng) {
+      const text = document.getElementById('memoryText').value;
+      const photoInput = document.getElementById('memoryPhoto');
+      const file = photoInput.files[0];
+
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const imgSrc = e.target.result;
+          const content = `<p>${text}</p><img class="memory-img" src="${imgSrc}">`;
+          L.marker([lat, lng]).addTo(map).bindPopup(content);
+          map.closePopup();
+        };
+        reader.readAsDataURL(file);
+      } else {
+        const content = `<p>${text}</p>`;
+        L.marker([lat, lng]).addTo(map).bindPopup(content);
+        map.closePopup();
+      }
+    }
+  </script>
+</body>
+</html>
