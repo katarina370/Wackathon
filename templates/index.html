@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Time Capsule Map</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    #map { height: 500px; width: 100%; }
+  </style>
+</head>
+<body>
+  <h2>Click on the map to save a memory</h2>
+  <div id="map"></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    const map = L.map('map').setView([37.5665, 126.9780], 13); // Seoul
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+    const userId = 'demo_user';  // 나중엔 로그인 ID로 바꾸면 됨
+
+    map.on('click', async function (e) {
+      const title = prompt("Enter title:");
+      const description = prompt("Enter description:");
+
+      const card = {
+        userid: userId,
+        title: title,
+        description: description,
+        lat: e.latlng.lat,
+        lng: e.latlng.lng
+      };
+
+      await fetch('/save_card', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(card)
+      });
+
+      alert("Saved!");
+      location.reload();
+    });
+
+    // 카드 로딩
+    fetch(`/get_cards/${userId}`)
+      .then(res => res.json())
+      .then(data => {
+        data.forEach(card => {
+          L.marker([card.lat, card.lng]).addTo(map)
+            .bindPopup(`<strong>${card.title}</strong><br>${card.description}`);
+        });
+      });
+  </script>
+</body>
+</html>
